@@ -56,7 +56,7 @@ if slideshow_images:
 else:
     # Create a blank image if no slideshow images are available
     print("Warning: No slideshow images found. Creating blank slideshow.")
-    slideshow_img = np.ones((1920, 1080, 3), dtype=np.uint8) * 240  # Light gray
+    slideshow_img = np.ones((1080, 1920, 3), dtype=np.uint8) * 240  # Light gray
     cv2.putText(slideshow_img, "No Slideshow Images Available", (200, 960), 
                cv2.FONT_HERSHEY_SIMPLEX, 1.5, (0, 0, 0), 2)
 
@@ -86,7 +86,7 @@ last_slideshow_change = time.time()
 def get_weather_info():
     try:
         # Replace with your API key and location
-        api_key = "27683695098cf44afc28e31152dffe5a"
+        api_key = ""
         city = "Jinju"
         url = f"http://api.openweathermap.org/data/2.5/weather?q={city}&appid={api_key}&units=metric"
         
@@ -176,12 +176,18 @@ while True:
     
     # STATE: SLIDESHOW - Show rotating images when no one is detected
     if current_state == STATE_SLIDESHOW:
+        # Get weather info
+        weather = get_weather_info()
         # Load and display the next slideshow image
         if current_time - last_slideshow_change > SLIDESHOW_INTERVAL:
             current_slideshow_index = (current_slideshow_index + 1) % len(slideshow_images)
             slideshow_img = cv2.imread(slideshow_images[current_slideshow_index])
             slideshow_img = cv2.resize(slideshow_img, (1080, 1920))
             last_slideshow_change = current_time
+            cv2.rectangle(slideshow_img, (0, 0), (1080, 80), (0, 0, 255), -1)
+            # Display weather
+            cv2.putText(slideshow_img, f"Weather: {weather['temp']} C, {weather['description']}", 
+                               (400, 50), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 0), 1)
             
         # Show the current slideshow image
         cv2.imshow('Welcome System', slideshow_img)
@@ -197,7 +203,11 @@ while True:
     img_small = cv2.cvtColor(img_small, cv2.COLOR_BGR2RGB)
     
     # Detect faces in current frame
-    face_current_frame = face_recognition.face_locations(img_small)
+    face_current_frame = None
+    if not face_current_frame:
+        for i in range(3):
+            face_current_frame = face_recognition.face_locations(img_small)
+            # print(face_current_frame)
     
     # If faces are detected and we're in slideshow mode, switch to processing
     if face_current_frame and current_state == STATE_SLIDESHOW:
@@ -228,15 +238,15 @@ while True:
             # Check for liveness (blink detection)
             is_live = 1 #detect_blink(face_landmarks)
             
-            if not is_live:
-                print("Liveness check failed - possible photo attack")
-                # Draw red box to indicate possible spoofing
-                y1, x2, y2, x1 = face_loc
-                y1, x2, y2, x1 = y1 * 4, x2 * 4, y2 * 4, x1 * 4
-                cv2.rectangle(imgBackground, (55 + x1, 162 + y1), (55 + x2, 162 + y2), (0, 0, 255), 2)
-                cv2.putText(imgBackground, "POSSIBLE FAKE", (55 + x1, 162 + y1 - 10), 
-                           cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
-                continue
+            # if not is_live:
+            #     print("Liveness check failed - possible photo attack")
+            #     # Draw red box to indicate possible spoofing
+            #     y1, x2, y2, x1 = face_loc
+            #     y1, x2, y2, x1 = y1 * 4, x2 * 4, y2 * 4, x1 * 4
+            #     cv2.rectangle(imgBackground, (55 + x1, 162 + y1), (55 + x2, 162 + y2), (0, 0, 255), 2)
+            #     cv2.putText(imgBackground, "POSSIBLE FAKE", (55 + x1, 162 + y1 - 10), 
+            #                cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
+            #     continue
                 
             # Compare with known faces
             matches = face_recognition.compare_faces(encode_list_known, encode_face)
@@ -266,9 +276,6 @@ while True:
                     # Update state to recognized
                     current_state = STATE_RECOGNIZED
                     
-                    # Get weather info
-                    weather = get_weather_info()
-                    
                     # Get personalized messages
                     messages = employee_info.get('messages', [])
                     if messages:
@@ -281,13 +288,9 @@ while True:
                     cv2.putText(imgBackground, f"Welcome, {employee_info['name']}", 
                                (400, 100), cv2.FONT_HERSHEY_SIMPLEX, 1.5, (0, 128, 0), 2)
                     
-                    # Display weather
-                    cv2.putText(imgBackground, f"Weather: {weather['temp']} C, {weather['description']}", 
-                               (400, 150), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 0), 1)
-                    
                     # Display message
                     cv2.putText(imgBackground, f"Message: {latest_message[:50]}{'...' if len(latest_message) > 50 else ''}", 
-                               (400, 200), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 0), 1)
+                               (400, 150), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 0), 1)
                     
                     # Display employee image
                     employee_image_resized = cv2.resize(employee_image, (200, 200))
@@ -295,7 +298,7 @@ while True:
                     
                     # Queue welcome message for audio playback
                     gender_prefix = "Mr." if employee_info.get('gender', 'M') == 'M' else "Ms."
-                    welcome_text = f"{gender_prefix} {employee_info['name']}, welcome to ABC Company."
+                    welcome_text = f"{gender_prefix} {employee_info['name']}, welcome to UNID."
                     if not audio_queue.qsize():  # Only queue if not already speaking
                         audio_queue.put(welcome_text)
                     

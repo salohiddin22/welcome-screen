@@ -33,7 +33,7 @@ def setup_firebase_database():
                 "name": "Dean",
                 "gender": "M",
                 "position": "AI Researcher",
-                "department": "서루션팀",
+                "department": "솔루션 팀",
                 "messages": ["Quarterly report due tomorrow"],
                 "last_visit": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             }

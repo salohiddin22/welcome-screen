@@ -8,3 +8,8 @@ This project is licensed under the XXX License - see the LICENSE file for detail
 ```
 /media/unid/Data/work/projects/4-trash-dumping/face-recognition/welcome_screen
 ```
+
+## Similar project
+```
+https://github.com/mujtabamohamed/attention/tree/main
+```
